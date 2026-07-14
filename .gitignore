@@ -1,0 +1,21 @@
+# --- Unity ---
+RobotArmGA/[Ll]ibrary/
+RobotArmGA/[Tt]emp/
+RobotArmGA/[Oo]bj/
+RobotArmGA/[Bb]uild*/
+RobotArmGA/[Ll]ogs/
+RobotArmGA/[Uu]serSettings/
+*.csproj
+*.sln
+
+# --- Python ---
+__pycache__/
+*.pyc
+
+# --- GA-server logs ---
+ga-server/logs/
+
+# --- Інше ---
+*.swp
+*.tmp
+*.bak
