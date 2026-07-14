@@ -66,7 +66,19 @@ def start_experiment(cfg: ExperimentConfig):
     # Кожен прогін — у власну папку: logs/run_YYYYMMDD_HHMMSS
     run_dir = LOG_ROOT / f"run_{datetime.now():%Y%m%d_%H%M%S}"
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "config.json").write_text(cfg.model_dump_json(indent=2),
+    # Прив'язка "результат ↔ версія коду" (Р9): git-хеш у конфіг прогону
+    cfg_payload = cfg.model_dump()
+    try:
+        import subprocess
+        cfg_payload["git_commit"] = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+            cwd=pathlib.Path(__file__).parent).stdout.strip() or "unknown"
+    except Exception:
+        cfg_payload["git_commit"] = "unknown"
+    cfg_payload["server_version"] = app.version
+    import json as _json
+    (run_dir / "config.json").write_text(_json.dumps(cfg_payload, indent=2),
                                          encoding="utf-8")
     STATE["engine"], STATE["config"], STATE["log_dir"] = engine, cfg, run_dir
     STATE["tolerance"] = TOL_START
