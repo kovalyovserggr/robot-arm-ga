@@ -530,10 +530,10 @@ MonoBehaviour:
   serverUrl: http://127.0.0.1:8000
   requestTimeout: 120
   config:
-    PopulationSize: 100
+    PopulationSize: 30
     ConstructionGeneCount: 18
     MotionGeneCount: 24
-    MaxGenerations: 200
+    MaxGenerations: 20
 --- !u!4 &1756067589
 Transform:
   m_ObjectHideFlags: 0

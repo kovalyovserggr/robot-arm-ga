@@ -32,22 +32,42 @@ A_MIN, A_MAX = 0.0, 0.35
 D_MIN, D_MAX = 0.0, 0.30
 M_FLOOR = 0.05   # м, захист від ділення на ~0 для виродженої руки
 
+# v1.3 (сесія 2026-08): заборонена зона довжини ланки. Ген нижче
+# GENE_SPLIT -> довжина 0 (злиття суглобів, як a4=a5=0 сферичного
+# зап'ястя); ген >= GENE_SPLIT -> довжина ЩОНАЙМЕНШЕ LINK_MIN (габарит
+# реального привода) до p_max. Проміжна зона (0, LINK_MIN) фізично
+# нереалізовна (два приводи перекриються) і навмисно вирізана з
+# простору декодування. ДЗЕРКАЛО Unity GenomeSpec.UnpackLinkLength —
+# зміни тут МУСЯТЬ повторюватись і там, інакше M розійдеться з
+# фактичною геометрією руки в симуляції.
+GENE_SPLIT = -0.5      # ~25% простору гена -> злиття
+LINK_MIN = 0.05        # м, мінімальний габарит привода
+
+
+def _unpack_link_length(g: float, l_max: float) -> float:
+    g = max(-1.0, min(1.0, g))
+    if g < GENE_SPLIT:
+        return 0.0
+    t = (g - GENE_SPLIT) / (1.0 - GENE_SPLIT)
+    return LINK_MIN + t * (l_max - LINK_MIN)
+
 OBJ_NAMES_FULL = ["T", "E", "W_cv", "W_max_over_M", "M"]
 OBJ_NAMES_FALLBACK = ["T", "E", "W_cv", "W_max"]
 
 
 def decode_material(genome: Genome) -> float | None:
-    """M = Σ(a_i + d_i) з генів конструкції (g ∈ [-1,1], як у Unity).
-    None, якщо геном не в стандартному 18-генному DH-розкладі —
-    тоді M і W_max_over_M виключаються з активних критеріїв."""
+    """M = Σ(a_i + d_i) з генів конструкції (g ∈ [-1,1], як у Unity),
+    з урахуванням забороненої зони (v1.3): a_i, d_i або точний 0
+    (злиття суглобів), або >= LINK_MIN. None, якщо геном не в
+    стандартному 18-генному DH-розкладі — тоді M і W_max_over_M
+    виключаються з активних критеріїв."""
     c = genome.construction
     if len(c) < 18:
         return None
     m = 0.0
     for i in range(LINKS):
-        g_a, g_d = c[i], c[12 + i]
-        a_i = A_MIN + (max(-1.0, min(1.0, g_a)) + 1.0) * 0.5 * (A_MAX - A_MIN)
-        d_i = D_MIN + (max(-1.0, min(1.0, g_d)) + 1.0) * 0.5 * (D_MAX - D_MIN)
+        a_i = _unpack_link_length(c[i], A_MAX)
+        d_i = _unpack_link_length(c[12 + i], D_MAX)
         m += a_i + d_i
     return m
 

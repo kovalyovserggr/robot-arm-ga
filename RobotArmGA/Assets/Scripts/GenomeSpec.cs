@@ -1,4 +1,4 @@
-// GenomeSpec.cs — константи GENOME_SPEC.md v1.0 і декодер генома.
+// GenomeSpec.cs — константи GENOME_SPEC.md v1.3 і декодер генома.
 // Єдине місце, де нормовані гени [-1,1] перетворюються на фізику.
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,6 +16,20 @@ namespace GAExperiment
         public const float AMin = 0f,    AMax = 0.35f;   // м
         public const float AlphaMin = -90f, AlphaMax = 90f; // °
         public const float DMin = 0f,    DMax = 0.30f;   // м
+
+        // v1.3 (сесія 2026-08): заборонена зона довжини ланки. Ген
+        // нижче GeneSplit -> довжина 0 (злиття суглобів, як a4=a5=0
+        // сферичного зап'ястя, ступінь волі суглоба НЕ втрачається —
+        // обнуляється лише геометрія розміщення осі, θ_i лишається
+        // вільним на весь діапазон). Ген >= GeneSplit -> довжина
+        // ЩОНАЙМЕНШЕ LinkMinPhysical (габарит реального привода) до
+        // p_max. Проміжна зона (0, LinkMinPhysical) фізично
+        // нереалізовна (два приводи перекриються) і навмисно вирізана
+        // з простору декодування. ДЗЕРКАЛО Python nsga2_engine.py
+        // _unpack_link_length — зміни тут МУСЯТЬ повторюватись і там,
+        // інакше критерій M розійдеться з фактичною геометрією руки.
+        public const float GeneSplit = -0.5f;        // ~25% простору гена -> злиття
+        public const float LinkMinPhysical = 0.05f;  // м, мінімальний габарит привода
 
         // Ліміти суглобів і фази (§2)
         public const float JointLimitDeg = 150f;
@@ -43,8 +57,23 @@ namespace GAExperiment
         public const float DriveDamping   = 100f;
         public const float DriveForceLimit = 300f;
 
+        /// <summary>Загальне лінійне розгортання (для α і кутів фаз — без забороненої зони).</summary>
         public static float Unpack(float g, float min, float max)
             => min + (Mathf.Clamp(g, -1f, 1f) + 1f) * 0.5f * (max - min);
+
+        /// <summary>
+        /// Розгортання довжини ланки (a_i, d_i) із забороненою зоною:
+        /// g &lt; GeneSplit -> 0 (злиття); g &gt;= GeneSplit -> лінійно
+        /// від LinkMinPhysical до lMax. Дзеркало Python
+        /// nsga2_engine._unpack_link_length — тримати синхронно.
+        /// </summary>
+        public static float UnpackLinkLength(float g, float lMax)
+        {
+            g = Mathf.Clamp(g, -1f, 1f);
+            if (g < GeneSplit) return 0f;
+            float t = (g - GeneSplit) / (1f - GeneSplit);
+            return LinkMinPhysical + t * (lMax - LinkMinPhysical);
+        }
     }
 
     /// <summary>Розгорнутий геном: фізичні параметри руки і рухів.</summary>
@@ -62,9 +91,11 @@ namespace GAExperiment
             List<float> c = g.Construction, m = g.Motion;
             for (int i = 0; i < GenomeSpec.Links; i++)
             {
-                dg.A[i]     = GenomeSpec.Unpack(c[i],      GenomeSpec.AMin, GenomeSpec.AMax);
+                // a_i, d_i — заборонена зона (v1.3); alpha БЕЗ зони
+                // (кут скручування не має "фізичного габариту").
+                dg.A[i]     = GenomeSpec.UnpackLinkLength(c[i], GenomeSpec.AMax);
                 dg.Alpha[i] = GenomeSpec.Unpack(c[6 + i],  GenomeSpec.AlphaMin, GenomeSpec.AlphaMax);
-                dg.D[i]     = GenomeSpec.Unpack(c[12 + i], GenomeSpec.DMin, GenomeSpec.DMax);
+                dg.D[i]     = GenomeSpec.UnpackLinkLength(c[12 + i], GenomeSpec.DMax);
             }
             for (int j = 0; j < GenomeSpec.Phases; j++)
                 for (int i = 0; i < GenomeSpec.Links; i++)
