@@ -155,6 +155,15 @@ class NSGA2Engine:
         self.crossover_rate = 0.9
         self.mutation_strategy = mutation_strategy  # лишено для сумісності логів
 
+        # Mating restriction (мітигація дисбалансу feasible/infeasible):
+        # при дуже малій допустимій частці випадковий бінарний турнір
+        # майже ніколи не парує двох допустимих одне з одним — успішна
+        # пара "конструкція+рухи" щоразу схрещується з чужою геометрією
+        # і розпадається (той самий епістатичний лок-ін, Т9, посилений
+        # арифметикою турніру). Ймовірність підмінити випадковий вибір
+        # батька на турнір ЛИШЕ серед допустимих, коли такі є.
+        self.feasible_mating_bias = 0.75
+
         self.last_eval: dict = {}     # individual_id -> objective record
         self.front_ids: set = set()   # individual_id на rank-0
         self._warned_no_material = False
@@ -225,13 +234,27 @@ class NSGA2Engine:
         recs.sort(key=lambda r: (r.rank, -r.crowd))
         elite = recs[: self.pop_size] if len(recs) >= self.pop_size else recs
 
+        # Елітизм: весь rank-0 фронт переходить незмінним (не лише 2!),
+        # з обмеженням, щоб один фронт не з'їв усю популяцію і не
+        # вбив різноманіття пізніше, коли допустимих стане багато.
+        front0_size = len(fronts[0]) if fronts else 0
+        n_elite_carry = min(max(2, front0_size),
+                            max(2, self.pop_size // 10), len(elite))
+
         new_pop: list[Genome] = []
-        for r in elite[: min(2, len(elite))]:
+        for r in elite[:n_elite_carry]:
             new_pop.append(r.genome.model_copy(update={"individual_id": len(new_pop)}))
 
+        feasible_pool = [r for r in elite if r.feasible]
+
+        def pick_parent():
+            if feasible_pool and self.rng.random() < self.feasible_mating_bias:
+                return self._tournament(feasible_pool)
+            return self._tournament(elite)
+
         while len(new_pop) < self.pop_size:
-            p1 = self._tournament(elite)
-            p2 = self._tournament(elite)
+            p1 = pick_parent()
+            p2 = pick_parent()
             c_constr, c_motion = self._sbx(p1.genome, p2.genome)
             self._poly_mutate(c_constr, *self._bounds("construction"))
             self._poly_mutate(c_motion, *self._bounds("motion"))
