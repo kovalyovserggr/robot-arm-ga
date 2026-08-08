@@ -30,6 +30,14 @@ namespace GAExperiment
         private float _bestPrecision;
         private float _bestApproach;   // мін. відстань ефектор↔деталь за прогін
 
+        // ДІАГНОСТИЧНЕ (сесія 2026-08, path_efficiency): реальний шлях
+        // деталі поки вона захоплена, vs пряма між точкою захвату і
+        // фінальною позицією. НЕ впливає на success/fitness — лише
+        // логується для аналізу "тягання по підлозі" / зайвих рухів.
+        private Vector3 _graspPos;
+        private Vector3 _partPrevPos;
+        private float _pathLength;
+
         // ── Статичні об'єкти площадки (створюються один раз) ────────────
         public void Init()
         {
@@ -78,6 +86,7 @@ namespace GAExperiment
             _collisions = 0; _grasped = false; _success = false;
             _bestPrecision = float.MaxValue;
             _bestApproach = float.MaxValue;
+            _pathLength = 0f; _graspPos = Vector3.zero; _partPrevPos = Vector3.zero;
             for (int i = 0; i < GenomeSpec.Links; i++)
             { _jointWork[i] = 0f; _fromPose[i] = 0f; _prevJointPos[i] = 0f; }
             Finished = false;
@@ -103,6 +112,7 @@ namespace GAExperiment
             DrivePhases();
             MeasureEnergy();
             TryGrasp();
+            TrackPath();
             TryInstall();
 
             float cycle = Sum(GenomeSpec.PhaseDurations);
@@ -168,6 +178,20 @@ namespace GAExperiment
             _grasp = _part.gameObject.AddComponent<FixedJoint>();
             _grasp.connectedArticulationBody = lastLink;
             _grasped = true;
+            // Старт трекінгу шляху — з фактичної точки захвату
+            _graspPos = _part.position;
+            _partPrevPos = _part.position;
+            _pathLength = 0f;
+        }
+
+        // Накопичує реальну довжину шляху деталі, поки вона захоплена.
+        // Викликається щокроку ПІСЛЯ TryGrasp() (щоб рух у крок захвату
+        // ще не рахувався зайвим) і ДО TryInstall().
+        private void TrackPath()
+        {
+            if (!_grasped) return;
+            _pathLength += Vector3.Distance(_part.position, _partPrevPos);
+            _partPrevPos = _part.position;
         }
 
         private void TryInstall()
@@ -209,6 +233,18 @@ namespace GAExperiment
                         : _bestApproach); // градієнт за всю траєкторію, не фінал
             if (float.IsNaN(prec) || prec > 10f) prec = 10f; // кліп вибухів
 
+            // path_efficiency: 1.0 = ідеально пряма; > 1.0 = зайві рухи.
+            // 0.0, якщо не захоплено (нема що міряти). Поріг 0.01 м у
+            // знаменнику — захист від вибуху при майже нульовому
+            // фактичному переміщенні деталі.
+            float pathEff = 0f;
+            if (_grasped)
+            {
+                float straight = Vector3.Distance(_graspPos, _part.position);
+                pathEff = _pathLength / Mathf.Max(straight, 0.01f);
+                if (float.IsNaN(pathEff) || float.IsInfinity(pathEff)) pathEff = 0f;
+            }
+
             Result = new IndividualResult
             {
                 IndividualId = _individualId,
@@ -220,6 +256,7 @@ namespace GAExperiment
                 PrecisionError = prec,
                 Collisions = _collisions,
                 Success = _success,
+                PathEfficiency = pathEff,
                 Fitness = 0f // рахує сервер
             };
         }

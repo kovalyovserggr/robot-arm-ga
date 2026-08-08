@@ -38,16 +38,19 @@ namespace GAExperiment
     [Serializable]
     public class IndividualResult
     {
-        [JsonProperty("individual_id")]   public int IndividualId;
-        [JsonProperty("fitness")]         public float Fitness; // рахує сервер
-        [JsonProperty("assembly_time")]   public float AssemblyTime;
-        [JsonProperty("energy")]          public float Energy;
-        [JsonProperty("wear_cv")]         public float WearCv;
-        [JsonProperty("wear_max")]        public float WearMax;
-        [JsonProperty("joint_work")]      public List<float> JointWork = new();
-        [JsonProperty("precision_error")] public float PrecisionError;
-        [JsonProperty("collisions")]      public int Collisions;
-        [JsonProperty("success")]         public bool Success;
+        [JsonProperty("individual_id")]    public int IndividualId;
+        [JsonProperty("fitness")]          public float Fitness; // рахує сервер
+        [JsonProperty("assembly_time")]    public float AssemblyTime;
+        [JsonProperty("energy")]           public float Energy;
+        [JsonProperty("wear_cv")]          public float WearCv;
+        [JsonProperty("wear_max")]         public float WearMax;
+        [JsonProperty("joint_work")]       public List<float> JointWork = new();
+        [JsonProperty("precision_error")]  public float PrecisionError;
+        [JsonProperty("collisions")]       public int Collisions;
+        [JsonProperty("success")]          public bool Success;
+        // Діагностичне (не впливає на fitness/відбір) — реальний шлях
+        // деталі / пряма, див. protocol.py IndividualResult.
+        [JsonProperty("path_efficiency")]  public float PathEfficiency;
     }
 
     [Serializable]
@@ -65,6 +68,11 @@ namespace GAExperiment
         [JsonProperty("motion_gene_count")]       public int MotionGeneCount = 24;
         [JsonProperty("max_generations")]         public int MaxGenerations = 100;
         [JsonProperty("seed")]                    public int? Seed = 42; // відтворюваність!
+        // ПРИМІТКА: mutation_strategy / curriculum_gate_tighten /
+        // curriculum_gate_loosen / optimizer поки НЕ дзеркалені тут —
+        // Unity їх не надсилає, сервер підставляє свої дефолти
+        // (nsga2, p_control, 0.25/0.02). Додати за потреби для серії Т10
+        // чи порівняння weighted_sum/nsga2 з інспектора.
     }
 
     // ── Клієнт ───────────────────────────────────────────────────────────
