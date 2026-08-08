@@ -1,7 +1,7 @@
 """
-GA-ядро. Зараз — мінімальна робоча реалізація (турнірна селекція,
-рівномірний кросовер, гаусова мутація), щоб цикл клієнт-сервер жив.
-Сюди підключається твій реальний GA з дисертації (розд. 2 / стаття 2):
+GA-ядро (Р7, Stage 1 — baseline зі зваженою згорткою). Турнірна
+селекція, рівномірний кросовер, гаусова мутація з керованою сигмою.
+Сюди підключається твій реальний GA з дисертації за потреби:
 достатньо зберегти сигнатури init_population() та next_generation().
 """
 import random
@@ -37,10 +37,18 @@ class GAEngine:
     # ── Ініціалізація ────────────────────────────────────────────────────
     def init_population(self) -> list[Genome]:
         self.generation_id = 0
+        # FIX (v1.2, сесія 2026-07): гени конструкції — у [-1, 1], як і
+        # motion. Раніше генерувались у [0, 1], а Unity-декодер
+        # (GenomeSpec.Unpack) очікує [-1,1] і мапить g=-1 -> p_min,
+        # g=+1 -> p_max. Діапазон [0,1] на вході декодувався ЛИШЕ у
+        # верхню половину кожного фізичного параметра — короткі ланки
+        # (a_i, d_i близько мінімуму) були генетично недосяжні. Це
+        # частково пояснює Т9 ("секції не бувають малими") — на додачу
+        # до епістатичного лок-іну.
         self.population = [
             Genome(
                 individual_id=i,
-                construction=[self.rng.uniform(0.0, 1.0) for _ in range(self.n_constr)],
+                construction=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_constr)],
                 motion=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_motion)],
             )
             for i in range(self.pop_size)
@@ -50,8 +58,6 @@ class GAEngine:
     # ── Крок еволюції ────────────────────────────────────────────────────
     def next_generation(self, results: list[IndividualResult]) -> list[Genome]:
         fit = {r.individual_id: r.fitness for r in results}
-        # Сурогат відстані до оптимуму для P-контролера сигми:
-        # найкраща (мінімальна) похибка позиціонування покоління
         precs = [r.precision_error for r in results if r.precision_error > 0]
         if precs:
             self.best_precision = min(precs)
@@ -65,17 +71,14 @@ class GAEngine:
                              "sigma": self.current_sigma()})
 
         new_pop: list[Genome] = []
-
-        # Елітизм: найкращі переходять без змін
         for g in scored[:self.elitism]:
             new_pop.append(g.model_copy(update={"individual_id": len(new_pop)}))
 
-        # Решта — селекція + кросовер + мутація
         while len(new_pop) < self.pop_size:
             p1 = self._tournament(scored, fit)
             p2 = self._tournament(scored, fit)
             c_constr, c_motion = self._crossover(p1, p2)
-            self._mutate(c_constr, lo=0.0, hi=1.0)
+            self._mutate(c_constr, lo=-1.0, hi=1.0)   # FIX: було 0.0..1.0
             self._mutate(c_motion, lo=-1.0, hi=1.0)
             new_pop.append(Genome(individual_id=len(new_pop),
                                   construction=c_constr, motion=c_motion))
@@ -106,11 +109,11 @@ class GAEngine:
         s = self.mutation_strategy
         if s == "constant":
             return self.mutation_sigma
-        if s == "annealing":  # розімкнений: за розкладом поколінь
+        if s == "annealing":
             return max(self.sigma_min,
                        self.mutation_sigma * (0.99 ** self.generation_id))
-        if s == "p_control":  # замкнений: σ ∝ фізичній похибці (аналог P-ланки)
-            if self.best_precision is None:            # до перших вимірювань
+        if s == "p_control":
+            if self.best_precision is None:
                 return self.mutation_sigma
             return min(self.sigma_max,
                        max(self.sigma_min, self.kp * self.best_precision))

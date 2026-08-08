@@ -16,9 +16,12 @@ from pydantic import BaseModel, Field
 class Genome(BaseModel):
     individual_id: int
     # Гени конструкції: довжини ланок, параметри шарнірів тощо.
-    # Порядок і семантика фіксуються в описі експерименту (стаття, дод. A).
+    # Порядок і семантика фіксуються в описі експерименту (GENOME_SPEC.md).
+    # УВАГА (v1.2): гени зберігаються нормованими в [-1, 1] — те саме,
+    # що й motion. Раніше construction генерувались у [0,1], через що
+    # Unity-декодер (очікує [-1,1]) міг видавати лише верхню половину
+    # фізичного діапазону кожного параметра. Виправлено в обох рушіях.
     construction: list[float]
-    # Гени рухів: параметри траєкторії / ключові кути по фазах монтажу.
     motion: list[float]
 
 
@@ -26,15 +29,14 @@ class Generation(BaseModel):
     generation_id: int
     genomes: list[Genome]
     done: bool = False                      # критерій зупинки GA досягнуто
-    best_fitness: float | None = None       # найкращий fitness попер. покоління
+    best_fitness: float | None = None       # найкращий fitness / розмір фронту
     success_tolerance: float = 0.005        # curriculum: допуск монтажу, м
 
 
 # ── Результати експерименту з боку Unity ────────────────────────────────────
 class IndividualResult(BaseModel):
     individual_id: int
-    fitness: float = 0.0                    # рахується на СЕРВЕРІ (див. main.py)
-    # Сирі метрики з симуляції (GENOME_SPEC.md §5):
+    fitness: float = 0.0                    # рахується на СЕРВЕРІ (логування)
     assembly_time: float = 0.0              # T: час монтажу, с
     energy: float = 0.0                     # E: механічна робота, Дж
     wear_cv: float = 0.0                    # W_cv: нерівномірність зносу
@@ -57,11 +59,13 @@ class ExperimentConfig(BaseModel):
     max_generations: int = 100
     target_fitness: float | None = None     # рання зупинка, якщо досягнуто
     seed: int | None = None                 # відтворюваність для статті!
-    # Стратегія керування сигмою мутації (експеримент Т4/Т4а):
-    #   constant  — фіксована σ0 (baseline)
-    #   annealing — детермінований відпал σ(g) = max(σ_min, σ0·0.99^g)
-    #   p_control — P-контролер: σ ∝ похибці позиціонування найкращої особини
+    # Стратегія керування сигмою мутації — ЛИШЕ для optimizer="weighted_sum"
+    # (Т4/Т4а). NSGA-II використовує SBX + поліноміальну мутацію (Р7).
     mutation_strategy: str = "p_control"
-    # Уставки curriculum-регулятора (тригер Шмітта, експеримент Т10):
-    curriculum_gate_tighten: float = 0.25   # стискати допуск, якщо успіх >=
-    curriculum_gate_loosen: float = 0.02    # відпускати, якщо успіх < (0 = вимкн.)
+    # Уставки curriculum-регулятора (тригер Шмітта, Т10):
+    curriculum_gate_tighten: float = 0.25
+    curriculum_gate_loosen: float = 0.02
+    # Р7: вибір рушія оптимізації —
+    #   "weighted_sum" — Stage 1 baseline (ga_engine.GAEngine)
+    #   "nsga2"        — Stage 2, основний метод (nsga2_engine.NSGA2Engine)
+    optimizer: str = "nsga2"
