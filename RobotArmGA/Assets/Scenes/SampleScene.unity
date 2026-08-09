@@ -534,7 +534,8 @@ MonoBehaviour:
     ConstructionGeneCount: 18
     MotionGeneCount: 24
     MaxGenerations: 10
-    Seed: 35
+    Seed: 30
+    SeriesLabel: 
 --- !u!4 &1756067589
 Transform:
   m_ObjectHideFlags: 0
