@@ -67,7 +67,15 @@ namespace GAExperiment
         [JsonProperty("construction_gene_count")] public int ConstructionGeneCount = 8;
         [JsonProperty("motion_gene_count")]       public int MotionGeneCount = 24;
         [JsonProperty("max_generations")]         public int MaxGenerations = 100;
-        [JsonProperty("seed")]                    public int? Seed = 42; // відтворюваність!
+        // FIX (сесія 2026-08): було "int? Seed" — Unity Inspector НЕ вміє
+        // серіалізувати Nullable<T> для звичайних класів і мовчки ховає
+        // таке поле зі списку (без помилок!). Поле було невидиме й
+        // незмінне через UI відколи його додали — усі прогони йшли на
+        // застиглому дефолті 42, попри намір варіювати сід між серіями.
+        [JsonProperty("seed")]                    public int Seed = 42; // відтворюваність!
+        // Автоматизація FIGURE_MANIFEST: заповни для офіційної серії
+        // (напр. "fig5-curriculum"), лиши порожнім для технічних тестів.
+        [JsonProperty("series_label")]            public string SeriesLabel = "";
         // ПРИМІТКА: mutation_strategy / curriculum_gate_tighten /
         // curriculum_gate_loosen / optimizer поки НЕ дзеркалені тут —
         // Unity їх не надсилає, сервер підставляє свої дефолти

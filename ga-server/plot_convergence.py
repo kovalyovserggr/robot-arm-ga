@@ -41,14 +41,8 @@ def auto_output_path(log_dir: pathlib.Path, last_gen: int) -> pathlib.Path:
     return OUTPUT_DIR / f"convergence_{log_dir.name}_gen{last_gen:04d}.png"
 
 
-def main():
-    log_root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "logs")
-    explicit_out = sys.argv[2] if len(sys.argv) > 2 else None
-
-    gens, log_dir = load_generations(log_root)
-    if not gens:
-        print(f"У {log_root} немає gen_*.json"); return
-
+def render_and_save(gens, log_dir: pathlib.Path,
+                    output_path: pathlib.Path | None = None) -> pathlib.Path | None:
     g_ids, best_f, mean_f = [], [], []
     succ_rate, prec_min, prec_mean = [], [], []
     wcv_mean, wmax_best, tol_curve = [], [], []
@@ -68,6 +62,9 @@ def main():
         best = max(rs, key=lambda r: r.get("fitness", 0.0))
         wmax_best.append(best.get("wear_max", 0.0))
         tol_curve.append(g.get("tolerance"))
+
+    if not g_ids:
+        return None
 
     fig, ax = plt.subplots(2, 2, figsize=(11, 7.5))
     fig.suptitle("Збіжність GA — оптимізація роботизованої руки", fontsize=13)
@@ -101,9 +98,30 @@ def main():
         a.set_xlabel("Покоління"); a.grid(alpha=0.3)
     fig.tight_layout()
 
-    out = pathlib.Path(explicit_out) if explicit_out else auto_output_path(log_dir, g_ids[-1])
+    out = output_path or auto_output_path(log_dir, g_ids[-1])
     fig.savefig(out, dpi=150)
-    print(f"Збережено: {out}  (поколінь: {len(g_ids)})")
+    plt.close(fig)  # критично при виклику з сервера: не накопичувати figures у пам'яті
+    return out
+
+
+def generate_convergence_plot(log_dir: pathlib.Path,
+                              output_path: pathlib.Path | None = None) -> pathlib.Path | None:
+    """Публічна точка входу — використовується і CLI, і сервером
+    (автопобудова при done=true)."""
+    gens, resolved_dir = load_generations(log_dir)
+    if not gens:
+        return None
+    return render_and_save(gens, resolved_dir, output_path)
+
+
+def main():
+    log_root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "logs")
+    explicit_out = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else None
+    out = generate_convergence_plot(log_root, explicit_out)
+    if out is None:
+        print(f"У {log_root} немає gen_*.json")
+        return
+    print(f"Збережено: {out}")
 
 
 if __name__ == "__main__":

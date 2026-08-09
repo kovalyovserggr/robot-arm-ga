@@ -510,7 +510,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a3f81f0377242c41bddd6f96cbce1b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GAExperiment.ExperimentOrchestrator
-  platformCount: 100
+  platformCount: 1
   gridColumns: 10
   spacing: 5
   timeScale: 1
@@ -530,10 +530,11 @@ MonoBehaviour:
   serverUrl: http://127.0.0.1:8000
   requestTimeout: 120
   config:
-    PopulationSize: 100
+    PopulationSize: 20
     ConstructionGeneCount: 18
     MotionGeneCount: 24
-    MaxGenerations: 200
+    MaxGenerations: 10
+    Seed: 35
 --- !u!4 &1756067589
 Transform:
   m_ObjectHideFlags: 0

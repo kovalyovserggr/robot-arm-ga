@@ -76,3 +76,8 @@ class ExperimentConfig(BaseModel):
     #   "weighted_sum" — Stage 1 baseline (ga_engine.GAEngine)
     #   "nsga2"        — Stage 2, основний метод (nsga2_engine.NSGA2Engine)
     optimizer: str = "nsga2"
+    # Автоматизація FIGURE_MANIFEST (сесія 2026-08): якщо непорожнє —
+    # прогін вважається частиною ОФІЦІЙНОЇ серії для конкретного рисунка
+    # статті ("fig5-curriculum", "fig7-tighten25" тощо). Кілька прогонів
+    # (різні сіди) з тим самим series_label автоматично групуються.
+    series_label: str = ""

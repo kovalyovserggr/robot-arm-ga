@@ -106,6 +106,7 @@ def start_experiment(cfg: ExperimentConfig):
     STATE["engine"], STATE["config"], STATE["log_dir"] = engine, cfg, run_dir
     STATE["tolerance"] = TOL_START
     STATE["champion"] = None
+    STATE["git_commit"] = cfg_payload["git_commit"]
     return Generation(generation_id=0, genomes=engine.init_population(),
                       success_tolerance=STATE["tolerance"])
 
@@ -171,6 +172,35 @@ def submit_results(res: GenerationResults):
 
     done = engine.generation_id >= cfg.max_generations or (
         cfg.target_fitness is not None and best is not None and best >= cfg.target_fitness)
+
+    if done:
+        try:
+            from plot_convergence import generate_convergence_plot
+            out = generate_convergence_plot(STATE["log_dir"])
+            print(f"[GA] Прогін завершено, графік: {out}")
+        except Exception as e:
+            out = None
+            print(f"[GA] Автопобудова графіка не вдалась (не критично): {e}")
+
+        # Автоматизація FIGURE_MANIFEST: лише для позначених серій
+        # (series_label непорожній) — групує прогони під одним лейблом,
+        # людина лише дописує "Назва/зміст" і фінальний вибір рисунка.
+        if cfg.series_label:
+            try:
+                idx_dir = pathlib.Path(__file__).parent.parent / "docs" / "ua"
+                idx_dir.mkdir(parents=True, exist_ok=True)
+                man_path = idx_dir / "figure_manifest_auto.md"
+                if not man_path.exists():
+                    man_path.write_text(
+                        "# Автоматичний маніфест серій — сирі дані для "
+                        "docs/ua/FIGURE_MANIFEST.md\n\n"
+                        "| series_label | run_id | git-хеш | сід | графік |\n"
+                        "|---|---|---|---|---|\n", encoding="utf-8")
+                with man_path.open("a", encoding="utf-8") as f:
+                    f.write(f"| {cfg.series_label} | {STATE['log_dir'].name} | "
+                            f"{STATE.get('git_commit', 'unknown')} | {cfg.seed} | {out} |\n")
+            except Exception as e:
+                print(f"[figure_manifest_auto] запис не вдався (не критично): {e}")
 
     return Generation(generation_id=engine.generation_id, genomes=genomes,
                       done=done, best_fitness=best, success_tolerance=tol)
