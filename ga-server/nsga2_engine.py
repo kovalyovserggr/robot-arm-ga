@@ -22,54 +22,13 @@ best_fitness(), history — main.py перемикає рушій прапорц
 """
 import random
 from protocol import Genome, IndividualResult
+from genome_seed import decode_material, make_seeded_individual
 
-# Дзеркало Unity GenomeSpec (GENOME_SPEC.md §1) — потрібне для
-# декодування генів конструкції у фізичні довжини ланок заради M і
-# W_max_over_M. Коректно ЛИШЕ для стандартного розкладу з 18 генів
-# (6×a + 6×alpha + 6×d); див. decode_material().
-LINKS = 6
-A_MIN, A_MAX = 0.0, 0.35
-D_MIN, D_MAX = 0.0, 0.30
 M_FLOOR = 0.05   # м, захист від ділення на ~0 для виродженої руки
-
-# v1.3 (сесія 2026-08): заборонена зона довжини ланки. Ген нижче
-# GENE_SPLIT -> довжина 0 (злиття суглобів, як a4=a5=0 сферичного
-# зап'ястя); ген >= GENE_SPLIT -> довжина ЩОНАЙМЕНШЕ LINK_MIN (габарит
-# реального привода) до p_max. Проміжна зона (0, LINK_MIN) фізично
-# нереалізовна (два приводи перекриються) і навмисно вирізана з
-# простору декодування. ДЗЕРКАЛО Unity GenomeSpec.UnpackLinkLength —
-# зміни тут МУСЯТЬ повторюватись і там, інакше M розійдеться з
-# фактичною геометрією руки в симуляції.
-GENE_SPLIT = -0.5      # ~25% простору гена -> злиття
-LINK_MIN = 0.05        # м, мінімальний габарит привода
-
-
-def _unpack_link_length(g: float, l_max: float) -> float:
-    g = max(-1.0, min(1.0, g))
-    if g < GENE_SPLIT:
-        return 0.0
-    t = (g - GENE_SPLIT) / (1.0 - GENE_SPLIT)
-    return LINK_MIN + t * (l_max - LINK_MIN)
+SEED_FRACTION = 0.10  # частка засіяної (гарантовано досяжної) популяції
 
 OBJ_NAMES_FULL = ["T", "E", "W_cv", "W_max_over_M", "M"]
 OBJ_NAMES_FALLBACK = ["T", "E", "W_cv", "W_max"]
-
-
-def decode_material(genome: Genome) -> float | None:
-    """M = Σ(a_i + d_i) з генів конструкції (g ∈ [-1,1], як у Unity),
-    з урахуванням забороненої зони (v1.3): a_i, d_i або точний 0
-    (злиття суглобів), або >= LINK_MIN. None, якщо геном не в
-    стандартному 18-генному DH-розкладі — тоді M і W_max_over_M
-    виключаються з активних критеріїв."""
-    c = genome.construction
-    if len(c) < 18:
-        return None
-    m = 0.0
-    for i in range(LINKS):
-        a_i = _unpack_link_length(c[i], A_MAX)
-        d_i = _unpack_link_length(c[12 + i], D_MAX)
-        m += a_i + d_i
-    return m
 
 
 class _Rec:
@@ -193,14 +152,21 @@ class NSGA2Engine:
 
     def init_population(self) -> list[Genome]:
         self.generation_id = 0
-        self.population = [
+        n_seed = max(1, int(round(self.pop_size * SEED_FRACTION)))
+        pop = [make_seeded_individual(self.rng, i, self.n_constr, self.n_motion)
+               for i in range(n_seed)]
+        pop += [
             Genome(
-                individual_id=i,
+                individual_id=n_seed + j,
                 construction=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_constr)],
                 motion=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_motion)],
             )
-            for i in range(self.pop_size)
+            for j in range(self.pop_size - n_seed)
         ]
+        self.rng.shuffle(pop)
+        for idx, g in enumerate(pop):
+            g.individual_id = idx
+        self.population = pop
         return self.population
 
     def _evaluate(self, results: list) -> list:
@@ -210,7 +176,7 @@ class NSGA2Engine:
             r = res_by_id.get(g.individual_id)
             if r is None:
                 continue
-            m = decode_material(g)
+            m = decode_material(g.construction)
             if m is None:
                 if not self._warned_no_material:
                     print(f"[NSGA2Engine] WARNING: construction_gene_count="

@@ -6,6 +6,9 @@ GA-ядро (Р7, Stage 1 — baseline зі зваженою згорткою). 
 """
 import random
 from protocol import Genome, IndividualResult
+from genome_seed import make_seeded_individual
+
+SEED_FRACTION = 0.10  # частка засіяної (гарантовано досяжної) популяції
 
 
 class GAEngine:
@@ -37,22 +40,21 @@ class GAEngine:
     # ── Ініціалізація ────────────────────────────────────────────────────
     def init_population(self) -> list[Genome]:
         self.generation_id = 0
-        # FIX (v1.2, сесія 2026-07): гени конструкції — у [-1, 1], як і
-        # motion. Раніше генерувались у [0, 1], а Unity-декодер
-        # (GenomeSpec.Unpack) очікує [-1,1] і мапить g=-1 -> p_min,
-        # g=+1 -> p_max. Діапазон [0,1] на вході декодувався ЛИШЕ у
-        # верхню половину кожного фізичного параметра — короткі ланки
-        # (a_i, d_i близько мінімуму) були генетично недосяжні. Це
-        # частково пояснює Т9 ("секції не бувають малими") — на додачу
-        # до епістатичного лок-іну.
-        self.population = [
+        n_seed = max(1, int(round(self.pop_size * SEED_FRACTION)))
+        pop = [make_seeded_individual(self.rng, i, self.n_constr, self.n_motion)
+               for i in range(n_seed)]
+        pop += [
             Genome(
-                individual_id=i,
+                individual_id=n_seed + j,
                 construction=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_constr)],
                 motion=[self.rng.uniform(-1.0, 1.0) for _ in range(self.n_motion)],
             )
-            for i in range(self.pop_size)
+            for j in range(self.pop_size - n_seed)
         ]
+        self.rng.shuffle(pop)
+        for idx, g in enumerate(pop):
+            g.individual_id = idx
+        self.population = pop
         return self.population
 
     # ── Крок еволюції ────────────────────────────────────────────────────

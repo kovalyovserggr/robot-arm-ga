@@ -1,13 +1,15 @@
 """
-plot_convergence.py — графіки збіжності GA з логів logs/gen_*.json.
-Запуск:  python plot_convergence.py [шлях_до_logs] [вихідний_файл.png]
-За замовчуванням: ./logs → convergence.png
+plot_convergence.py — графіки збіжності GA/NSGA-II з логів gen_*.json.
 
-Чотири панелі (прообраз рисунків статті):
-  1) fitness: best і mean по поколіннях
-  2) частка успішних монтажів
-  3) похибка позиціонування: min і mean
-  4) критерії надійності: mean W_cv і W_max найкращої особини
+Запуск:
+  python plot_convergence.py                    # найсвіжіший прогін,
+                                                  # автозбереження в OUTPUT_DIR
+  python plot_convergence.py logs\\run_...        # конкретний прогін
+  python plot_convergence.py logs результат.png  # свій шлях/ім'я (як раніше)
+
+Без явного шляху виводу — файл сам летить у OUTPUT_DIR з іменем, що
+містить назву папки прогону і номер останнього покоління (без ризику
+випадково перезаписати попередній графік).
 """
 import json
 import pathlib
@@ -17,10 +19,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# За домовленістю (сесія 2026-08): графіки для статті/архіву — сюди.
+# Змінити тут, якщо шлях на машині інший.
+OUTPUT_DIR = pathlib.Path(r"C:\simulation\images")
+
 
 def load_generations(log_dir: pathlib.Path):
-    # Якщо в папці немає gen_*.json, але є підпапки run_* —
-    # беремо найсвіжіший прогін автоматично
     if not list(log_dir.glob("gen_*.json")):
         runs = sorted(log_dir.glob("run_*"))
         if runs:
@@ -28,17 +32,22 @@ def load_generations(log_dir: pathlib.Path):
             print(f"Використовую найсвіжіший прогін: {log_dir}")
     gens = []
     for f in sorted(log_dir.glob("gen_*.json")):
-        data = json.loads(f.read_text(encoding="utf-8"))
-        gens.append(data)
-    return gens
+        gens.append(json.loads(f.read_text(encoding="utf-8")))
+    return gens, log_dir
+
+
+def auto_output_path(log_dir: pathlib.Path, last_gen: int) -> pathlib.Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    return OUTPUT_DIR / f"convergence_{log_dir.name}_gen{last_gen:04d}.png"
 
 
 def main():
-    log_dir = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "logs")
-    out = sys.argv[2] if len(sys.argv) > 2 else "convergence.png"
-    gens = load_generations(log_dir)
+    log_root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "logs")
+    explicit_out = sys.argv[2] if len(sys.argv) > 2 else None
+
+    gens, log_dir = load_generations(log_root)
     if not gens:
-        print(f"У {log_dir} немає gen_*.json"); return
+        print(f"У {log_root} немає gen_*.json"); return
 
     g_ids, best_f, mean_f = [], [], []
     succ_rate, prec_min, prec_mean = [], [], []
@@ -75,8 +84,7 @@ def main():
     ax[1, 0].axhline(0.005, color="red", ls="--", lw=0.8, label="допуск 5 мм")
     if any(t is not None for t in tol_curve):
         ax[1, 0].semilogy(g_ids, [t if t else None for t in tol_curve],
-                          color="green", ls=":", lw=1.6,
-                          label="допуск curriculum")
+                          color="green", ls=":", lw=1.6, label="допуск curriculum")
     ax[1, 0].set_title("Похибка позиціонування, м (log)"); ax[1, 0].legend()
 
     ax[1, 1].plot(g_ids, wcv_mean, label="W_cv (mean)", lw=1.5, color="tab:blue")
@@ -92,6 +100,8 @@ def main():
     for a in ax.flat:
         a.set_xlabel("Покоління"); a.grid(alpha=0.3)
     fig.tight_layout()
+
+    out = pathlib.Path(explicit_out) if explicit_out else auto_output_path(log_dir, g_ids[-1])
     fig.savefig(out, dpi=150)
     print(f"Збережено: {out}  (поколінь: {len(g_ids)})")
 

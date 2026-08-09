@@ -80,6 +80,29 @@ def start_experiment(cfg: ExperimentConfig):
     (run_dir / "config.json").write_text(_json.dumps(cfg_payload, indent=2),
                                          encoding="utf-8")
 
+    # Автофакти прогону (регламент §5): ЛИШЕ об'єктивні поля, без
+    # інтерпретації — сенс/висновок дописуєш вручну в docs/ua/runs_index.md
+    # після прогону. Окремий файл, щоб не ризикувати автоправками
+    # куратованого журналу.
+    try:
+        idx_dir = pathlib.Path(__file__).parent.parent / "docs" / "ua"
+        idx_dir.mkdir(parents=True, exist_ok=True)
+        idx_path = idx_dir / "runs_index_auto.md"
+        if not idx_path.exists():
+            idx_path.write_text(
+                "# Автофакти прогонів (без інтерпретації) — сирі дані для "
+                "docs/ua/runs_index.md\n\n"
+                "| run_id | дата | git-хеш | optimizer | сід | population | "
+                "max_generations | мета (заповнити вручну) |\n"
+                "|---|---|---|---|---|---|---|---|\n", encoding="utf-8")
+        with idx_path.open("a", encoding="utf-8") as f:
+            f.write(f"| {run_dir.name} | {datetime.now():%Y-%m-%d %H:%M} | "
+                    f"{cfg_payload['git_commit']} | {cfg.optimizer} | "
+                    f"{cfg.seed} | {cfg.population_size} | "
+                    f"{cfg.max_generations} | <TODO> |\n")
+    except Exception as e:
+        print(f"[runs_index_auto] запис не вдався (не критично): {e}")
+
     STATE["engine"], STATE["config"], STATE["log_dir"] = engine, cfg, run_dir
     STATE["tolerance"] = TOL_START
     STATE["champion"] = None
