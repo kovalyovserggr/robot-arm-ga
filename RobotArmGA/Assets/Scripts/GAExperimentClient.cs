@@ -76,6 +76,9 @@ namespace GAExperiment
         // Автоматизація FIGURE_MANIFEST: заповни для офіційної серії
         // (напр. "fig5-curriculum"), лиши порожнім для технічних тестів.
         [JsonProperty("series_label")]            public string SeriesLabel = "";
+        // Т3/Т10: "self_paced" (тригер Шмітта) або "open_loop" (сліпий
+        // розклад, відтворення Серії A для Рис.4 A vs B).
+        [JsonProperty("curriculum_strategy")]     public string CurriculumStrategy = "self_paced";
         // ПРИМІТКА: mutation_strategy / curriculum_gate_tighten /
         // curriculum_gate_loosen / optimizer поки НЕ дзеркалені тут —
         // Unity їх не надсилає, сервер підставляє свої дефолти

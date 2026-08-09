@@ -37,8 +37,16 @@ def weighted_sum_fitness(r) -> float:
 TOL_START, TOL_MIN, TOL_MAX = 0.05, 0.005, 0.08
 TOL_SHRINK = 0.96
 
-def update_tolerance(success_rate: float) -> float:
-    cfg = STATE["config"]
+def update_tolerance(success_rate: float, generation_id: int, cfg) -> float:
+    if cfg.curriculum_strategy == "open_loop":
+        # Сліпий розклад (Серія A, докод-git епоха): не залежить від
+        # success_rate взагалі — стискається за календарем поколінь.
+        tol = max(TOL_MIN, TOL_START * (0.98 ** generation_id))
+        STATE["tolerance"] = tol
+        return tol
+    if cfg.curriculum_strategy != "self_paced":
+        raise ValueError(f"Невідома curriculum_strategy: {cfg.curriculum_strategy}")
+    # self_paced: тригер Шмітта (реалізація без змін)
     tol = STATE.get("tolerance", TOL_START)
     if success_rate >= cfg.curriculum_gate_tighten:
         tol = max(TOL_MIN, tol * TOL_SHRINK)
@@ -128,7 +136,7 @@ def submit_results(res: GenerationResults):
         r.fitness = weighted_sum_fitness(r)
 
     success_rate = sum(r.success for r in res.results) / max(len(res.results), 1)
-    tol = update_tolerance(success_rate)
+    tol = update_tolerance(success_rate, engine.generation_id, cfg)
 
     # Стара популяція (та, що щойно оцінена) — потрібна для геному
     # чемпіона; next_generation() її замінить.

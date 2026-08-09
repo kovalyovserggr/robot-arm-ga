@@ -81,3 +81,9 @@ class ExperimentConfig(BaseModel):
     # статті ("fig5-curriculum", "fig7-tighten25" тощо). Кілька прогонів
     # (різні сіди) з тим самим series_label автоматично групуються.
     series_label: str = ""
+    # Т3/Т10: стратегія curriculum допуску —
+    #   "self_paced" — тригер Шмітта, стискає лише коли success_rate
+    #                  досягає порогу (реалізовано, дефолт з 2026-07);
+    #   "open_loop"  — сліпий розклад ε(g)=max(5мм,50мм·0.98^g), як у
+    #                  найпершій Серії A (відтворення для Рис.4 A vs B).
+    curriculum_strategy: str = "self_paced"
