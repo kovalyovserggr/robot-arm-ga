@@ -79,11 +79,15 @@ namespace GAExperiment
         // Т3/Т10: "self_paced" (тригер Шмітта) або "open_loop" (сліпий
         // розклад, відтворення Серії A для Рис.4 A vs B).
         [JsonProperty("curriculum_strategy")]     public string CurriculumStrategy = "self_paced";
+        // Р7: перемикач методу оптимізації — "nsga2" (Stage 2, основний)
+        // або "weighted_sum" (Stage 1 baseline). Раніше поле не
+        // надсилалось з Unity — сервер тихо підставляв дефолт "nsga2",
+        // тож baseline-серію було неможливо запустити з інспектора.
+        [JsonProperty("optimizer")]               public string Optimizer = "nsga2";
         // ПРИМІТКА: mutation_strategy / curriculum_gate_tighten /
-        // curriculum_gate_loosen / optimizer поки НЕ дзеркалені тут —
-        // Unity їх не надсилає, сервер підставляє свої дефолти
-        // (nsga2, p_control, 0.25/0.02). Додати за потреби для серії Т10
-        // чи порівняння weighted_sum/nsga2 з інспектора.
+        // curriculum_gate_loosen поки НЕ дзеркалені тут — Unity їх не
+        // надсилає, сервер підставляє свої дефолти (p_control, 0.25/0.02).
+        // Додати за потреби для серії Т10 (варіювання уставок регулятора).
     }
 
     // ── Клієнт ───────────────────────────────────────────────────────────

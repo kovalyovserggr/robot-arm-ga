@@ -1,0 +1,3 @@
+#  маніфест серій — сирі дані для docs/ua/FIGURE_MANIFEST.md
+fig04_curriculum_comparison.png :
+Comparison of self-paced (Schmitt-trigger) vs. open-loop curriculum strategies across 3 seeds each. Self-paced achieves breakthrough in 2/3 seeds (generation ~105–125) and sustains 15–40% success rate; open-loop fails to converge in all 3 seeds within 200 generations, with the tolerance schedule outpacing the population's actual capability."
