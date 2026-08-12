@@ -84,10 +84,17 @@ namespace GAExperiment
         // надсилалось з Unity — сервер тихо підставляв дефолт "nsga2",
         // тож baseline-серію було неможливо запустити з інспектора.
         [JsonProperty("optimizer")]               public string Optimizer = "nsga2";
-        // ПРИМІТКА: mutation_strategy / curriculum_gate_tighten /
-        // curriculum_gate_loosen поки НЕ дзеркалені тут — Unity їх не
-        // надсилає, сервер підставляє свої дефолти (p_control, 0.25/0.02).
-        // Додати за потреби для серії Т10 (варіювання уставок регулятора).
+        // Т4/Т4а: керування сигмою мутації (лише для optimizer="weighted_sum" —
+        // NSGA-II завжди використовує SBX + поліноміальну мутацію).
+        //   "p_control" — σ = clamp(Kp·prec_best) (дефолт, замкнений контур)
+        //   "annealing" — σ(g) = max(σ_min, σ0·0.99^g) (розімкнений розклад)
+        //   "constant"  — фіксована σ0
+        [JsonProperty("mutation_strategy")]       public string MutationStrategy = "p_control";
+        // Т10: уставки тригера Шмітта для self_paced curriculum —
+        // стискати допуск, якщо success_rate >= tighten; послаблювати,
+        // якщо < loosen. Серія уставок варіює саме ці два числа.
+        [JsonProperty("curriculum_gate_tighten")] public float CurriculumGateTighten = 0.25f;
+        [JsonProperty("curriculum_gate_loosen")]  public float CurriculumGateLoosen = 0.02f;
     }
 
     // ── Клієнт ───────────────────────────────────────────────────────────
