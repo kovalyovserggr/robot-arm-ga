@@ -231,6 +231,23 @@ def champion():
     return ch
 
 
+@app.post("/experiment/champion/load")
+def load_champion_from_run(run_id: str):
+    """Підвантажує champion.json ЗАВЕРШЕНОГО прогону в поточну пам'ять
+    сервера (STATE["champion"]), щоб ChampionReplay.cs (живий GET
+    /experiment/champion) міг показати чемпіона старого прогону навіть
+    після рестарту сервера — файл на диску переживає рестарти, пам'ять
+    STATE ні. Виклик: POST /experiment/champion/load?run_id=run_20260810_131108
+    """
+    ch_path = LOG_ROOT / run_id / "champion.json"
+    if not ch_path.exists():
+        raise HTTPException(404, f"Немає champion.json у {LOG_ROOT / run_id}")
+    ch = _json.loads(ch_path.read_text(encoding="utf-8"))
+    STATE["champion"] = ch
+    return {"loaded": run_id, "generation": ch.get("generation"),
+            "fitness": ch.get("fitness")}
+
+
 @app.get("/experiment/pareto_front")
 def pareto_front():
     """Поточний фронт Парето (rank-0): id + об'єктиви. Порожньо для

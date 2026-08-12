@@ -534,10 +534,10 @@ MonoBehaviour:
     ConstructionGeneCount: 18
     MotionGeneCount: 24
     MaxGenerations: 200
-    Seed: 44
-    SeriesLabel: fig-nsga2-vs-baseline-weightedsum
+    Seed: 42
+    SeriesLabel: fig-nsga2-vs-baseline-nsga2
     CurriculumStrategy: self_paced
-    Optimizer: weighted_sum
+    Optimizer: nsga2
 --- !u!4 &1756067589
 Transform:
   m_ObjectHideFlags: 0

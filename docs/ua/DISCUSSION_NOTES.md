@@ -149,6 +149,14 @@
   утримає успіхи — чемпіони мають "худнути" поколіннями (кадр для
   статті: еволюція випадкового черв'яка в мінімальну компоновку).
 
+
+
+
+
+
+Т19
+"Within a single evolutionary run, once a successful body plan (structural genome) is discovered, subsequent generations predominantly refine the motion genome around it, with construction parameters (M) converging to a narrow neighborhood — an instance of the epistatic lock-in phenomenon (cf. champion analysis). Consequently, the parsimony–uniformity trade-off (M vs. W_cv) manifests primarily across independent runs (different seeds discovering distinct body plans), not within the population of a single run's terminal generations."
+
 ## Куди це йде у статті
 - Problem Statement: Т1, Т2.
 - Methods: Т3 (curriculum + відпал), Т4 (порівняння стратегій мутації).
