@@ -448,7 +448,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1351395782
 Transform:
   m_ObjectHideFlags: 0
@@ -497,7 +497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1756067587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,10 +534,10 @@ MonoBehaviour:
     ConstructionGeneCount: 18
     MotionGeneCount: 24
     MaxGenerations: 200
-    Seed: 44
+    Seed: 43
     SeriesLabel: fig-nsga2-vs-baseline-weightedsum
     CurriculumStrategy: self_paced
-    Optimizer: weighted_sum
+    Optimizer: nsga2
 --- !u!4 &1756067589
 Transform:
   m_ObjectHideFlags: 0
