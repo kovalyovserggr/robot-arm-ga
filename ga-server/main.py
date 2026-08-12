@@ -19,6 +19,14 @@ app = FastAPI(title="GA Robot-Arm Optimization Server", version="0.3")
 # конкретні (напр. збурені) геноми через звичайний Unity-цикл без
 # жодних змін клієнта. Заповнюється /experiment/stage_fixed_genomes.
 PENDING_FIXED_GENOMES: list[dict] | None = None
+# FIX (той самий клас бага, що й champion.tolerance off-by-one):
+# без цього /experiment/start завжди стартував би з дефолтного
+# TOL_START=50мм, а не з допуску, під який конкретний чемпіон РЕАЛЬНО
+# оптимізувався — систематично й хибно вибракувавши навіть точні
+# копії успішного генома. Виявлено на реальних даних (Сергій,
+# robustness-тест сіда 43: усі 30 "чистих" клонів провалились через
+# tolerance=50мм замість справжніх 55.4мм чемпіона).
+PENDING_INITIAL_TOLERANCE: float | None = None
 
 # ── Stage 1 baseline: зважена згортка (Р7) ──────────────────────────────
 T_REF, E_REF, W_REF = 30.0, 2000.0, 1000.0
@@ -69,15 +77,19 @@ ENGINES = {"weighted_sum": GAEngine, "nsga2": NSGA2Engine}
 
 
 @app.post("/experiment/stage_fixed_genomes")
-def stage_fixed_genomes(genomes: list[Genome]):
+def stage_fixed_genomes(genomes: list[Genome], initial_tolerance: float | None = None):
     """Т7 (robustness): підкладає ЯВНИЙ список геномів для наступного
     /experiment/start — сервер віддасть саме їх замість випадкової
-    популяції. Постав Unity Population Size = len(genomes),
-    Max Generations = 1, потім Play. Одноразово — після використання
-    очищається."""
-    global PENDING_FIXED_GENOMES
+    популяції. initial_tolerance (опційно) — допуск, під який ці
+    геноми РЕАЛЬНО оцінюватимуться (напр. champion.tolerance джерела,
+    а НЕ дефолтні 50мм) — без цього навіть точні копії успішного
+    чемпіона можуть хибно провалитись через занадто суворий дефолт.
+    Постав Unity Population Size = len(genomes), Max Generations = 1,
+    потім Play. Одноразово — після використання очищається."""
+    global PENDING_FIXED_GENOMES, PENDING_INITIAL_TOLERANCE
     PENDING_FIXED_GENOMES = [g.model_dump() for g in genomes]
-    return {"staged": len(PENDING_FIXED_GENOMES),
+    PENDING_INITIAL_TOLERANCE = initial_tolerance
+    return {"staged": len(PENDING_FIXED_GENOMES), "initial_tolerance": initial_tolerance,
             "note": "Постав Unity Population Size="
                     f"{len(PENDING_FIXED_GENOMES)}, Max Generations=1, тоді Play."}
 
@@ -136,7 +148,7 @@ def start_experiment(cfg: ExperimentConfig):
     STATE["champion"] = None
     STATE["git_commit"] = cfg_payload["git_commit"]
 
-    global PENDING_FIXED_GENOMES
+    global PENDING_FIXED_GENOMES, PENDING_INITIAL_TOLERANCE
     if PENDING_FIXED_GENOMES is not None:
         if len(PENDING_FIXED_GENOMES) != cfg.population_size:
             raise HTTPException(400, f"Підкладено {len(PENDING_FIXED_GENOMES)} геномів, "
@@ -150,6 +162,9 @@ def start_experiment(cfg: ExperimentConfig):
         ]
         PENDING_FIXED_GENOMES = None  # одноразово
         genomes = engine.population
+        if PENDING_INITIAL_TOLERANCE is not None:
+            STATE["tolerance"] = PENDING_INITIAL_TOLERANCE  # FIX: не TOL_START
+            PENDING_INITIAL_TOLERANCE = None  # одноразово
     else:
         genomes = engine.init_population()
 

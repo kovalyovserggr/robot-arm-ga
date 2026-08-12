@@ -530,14 +530,14 @@ MonoBehaviour:
   serverUrl: http://127.0.0.1:8000
   requestTimeout: 120
   config:
-    PopulationSize: 100
+    PopulationSize: 90
     ConstructionGeneCount: 18
     MotionGeneCount: 24
-    MaxGenerations: 200
+    MaxGenerations: 1
     Seed: 43
     SeriesLabel: fig-nsga2-vs-baseline-weightedsum
     CurriculumStrategy: self_paced
-    Optimizer: nsga2
+    Optimizer: weighted_sum
     MutationStrategy: p_control
     CurriculumGateTighten: 0.25
     CurriculumGateLoosen: 0.02

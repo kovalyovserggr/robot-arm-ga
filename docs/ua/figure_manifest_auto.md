@@ -19,3 +19,4 @@
 | fig-nsga2-vs-baseline-weightedsum | run_20260810_201629 | c11893b | 43 | C:\simulation\images\convergence_run_20260810_201629_gen0199.png |
 | fig-nsga2-vs-baseline-weightedsum | run_20260810_213316 | c11893b | 44 | C:\simulation\images\convergence_run_20260810_213316_gen0199.png |
 | fig-nsga2-vs-baseline-weightedsum | run_20260812_101137 | 0e1f93b | 43 | C:\simulation\images\convergence_run_20260812_101137_gen0199.png |
+| fig-nsga2-vs-baseline-weightedsum | run_20260812_223946 | e175db0 | 43 | C:\simulation\images\convergence_run_20260812_223946_gen0000.png |

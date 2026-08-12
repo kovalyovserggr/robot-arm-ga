@@ -30,6 +30,7 @@ import argparse
 import json
 import pathlib
 import random
+import urllib.parse
 import urllib.request
 
 DEG_TO_GENE = 1.0 / 150.0  # мотор-ген розгортається на ±150° при g∈[-1,1] -> 150°/одиницю
@@ -76,10 +77,20 @@ def cmd_stage(args):
         "order": order,
     }, indent=2), encoding="utf-8")
 
+    # FIX: передаємо ДІЮЧИЙ допуск чемпіона (champion.tolerance —
+    # коректний завдяки попередньому фіксу off-by-one), а не дефолтні
+    # 50мм сервера. Без цього навіть точні копії успішного генома
+    # хибно провалюються, бо оцінюються за занадто суворим порогом,
+    # під який вони не оптимізувались (виявлено на реальних даних).
+    champion_tolerance = champ.get("tolerance")
+    query = urllib.parse.urlencode(
+        {"initial_tolerance": champion_tolerance} if champion_tolerance is not None else {})
+    url = f"{args.server_url}/experiment/stage_fixed_genomes"
+    if query:
+        url += f"?{query}"
     body = json.dumps(pop).encode("utf-8")
-    req = urllib.request.Request(
-        f"{args.server_url}/experiment/stage_fixed_genomes", data=body,
-        method="POST", headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(url, data=body, method="POST",
+                                 headers={"Content-Type": "application/json"})
     resp = json.loads(urllib.request.urlopen(req).read())
 
     print(resp["note"])
@@ -87,6 +98,10 @@ def cmd_stage(args):
     print(f"Construction Gene Count    = {len(genome['construction'])}")
     print(f"Motion Gene Count          = {len(genome['motion'])}")
     print(f"Max Generations            = 1")
+    print(f"Допуск чемпіона (передано) = "
+         f"{champion_tolerance*1000:.2f} мм" if champion_tolerance is not None
+         else "Допуск чемпіона            = <ВІДСУТНІЙ у champion.json! "
+              "Буде дефолт 50мм — може дати хибні провали, як минулого разу>")
     print(f"Рівні шуму (° на ген руху) = {args.noise_deg}, "
          f"по {args.samples_per_level} на рівень")
     print(f"План збережено: {plan_path}  (знадобиться для analyze)")
