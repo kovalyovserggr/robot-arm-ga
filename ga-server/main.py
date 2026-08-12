@@ -135,6 +135,17 @@ def submit_results(res: GenerationResults):
     for r in res.results:
         r.fitness = weighted_sum_fitness(r)
 
+    # FIX (сесія 2026-08): захоплюємо ДІЮЧИЙ допуск ДО того, як
+    # update_tolerance() його перезапише на значення для НАСТУПНОГО
+    # покоління. Раніше champion.json зберігав tol ПІСЛЯ оновлення —
+    # тобто допуск, стиснутий уже ЗАВДЯКИ успіху цього самого чемпіона,
+    # а не той (ширший), під який він реально пройшов монтаж. Наслідок:
+    # ChampionReplay вимагав від чемпіона суворішого порогу, ніж той,
+    # для якого він оптимізувався — детермінований, стабільний
+    # псевдо-провал при повторному відтворенні (виявлено спостереженням
+    # Сергія: 10 повторів поспіль дають ІДЕНТИЧНИЙ провал — не шум).
+    active_tol = STATE.get("tolerance", TOL_START)
+
     success_rate = sum(r.success for r in res.results) / max(len(res.results), 1)
     tol = update_tolerance(success_rate, engine.generation_id, cfg)
 
@@ -148,7 +159,7 @@ def submit_results(res: GenerationResults):
     best = engine.best_fitness()
 
     log_payload = res.model_dump()
-    log_payload["tolerance"] = tol
+    log_payload["tolerance"] = active_tol  # FIX: діючий на це покоління, не наступний
     log_payload["success_rate"] = success_rate
     log_payload["optimizer"] = cfg.optimizer
     last_eval = getattr(engine, "last_eval", None)
@@ -171,7 +182,7 @@ def submit_results(res: GenerationResults):
     if genome_of_best is not None and (champ is None or best_r.fitness > champ["fitness"]):
         ev = (last_eval or {}).get(best_r.individual_id, {})
         champ = {"generation": res.generation_id, "fitness": best_r.fitness,
-                 "tolerance": tol, "metrics": best_r.model_dump(),
+                 "tolerance": active_tol, "metrics": best_r.model_dump(),
                  "objectives": ev.get("objectives"), "rank": ev.get("rank"),
                  "genome": genome_of_best.model_dump()}
         STATE["champion"] = champ
