@@ -87,3 +87,13 @@ class ExperimentConfig(BaseModel):
     #   "open_loop"  — сліпий розклад ε(g)=max(5мм,50мм·0.98^g), як у
     #                  найпершій Серії A (відтворення для Рис.4 A vs B).
     curriculum_strategy: str = "self_paced"
+
+
+class RobustnessStartConfig(BaseModel):
+    """Т7: одноразовий тест стійкості чемпіона до шуму привода —
+    НЕ еволюція, окрема пара ендпоінтів (/experiment/robustness/*),
+    не чіпає GAEngine/NSGA2Engine."""
+    run_id: str                                  # звідки взяти champion.json
+    noise_deg_levels: list[float] = [0.0, 0.1, 0.5]  # 0.0 = контроль (чистий фіз. шум)
+    samples_per_level: int = 30
+    seed: int | None = None

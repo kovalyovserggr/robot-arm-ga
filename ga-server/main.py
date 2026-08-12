@@ -8,11 +8,17 @@ import pathlib
 import subprocess
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
-from protocol import ExperimentConfig, Generation, GenerationResults
+from protocol import ExperimentConfig, Generation, GenerationResults, Genome
 from ga_engine import GAEngine
 from nsga2_engine import NSGA2Engine
 
 app = FastAPI(title="GA Robot-Arm Optimization Server", version="0.3")
+
+# Т7 (robustness): "підкладені" наперед геноми для НАСТУПНОГО
+# /experiment/start — одноразове використання, дозволяє прогнати
+# конкретні (напр. збурені) геноми через звичайний Unity-цикл без
+# жодних змін клієнта. Заповнюється /experiment/stage_fixed_genomes.
+PENDING_FIXED_GENOMES: list[dict] | None = None
 
 # ── Stage 1 baseline: зважена згортка (Р7) ──────────────────────────────
 T_REF, E_REF, W_REF = 30.0, 2000.0, 1000.0
@@ -60,6 +66,20 @@ STATE: dict = {"engine": None, "config": None, "log_dir": None}
 LOG_ROOT = pathlib.Path("logs"); LOG_ROOT.mkdir(exist_ok=True)
 
 ENGINES = {"weighted_sum": GAEngine, "nsga2": NSGA2Engine}
+
+
+@app.post("/experiment/stage_fixed_genomes")
+def stage_fixed_genomes(genomes: list[Genome]):
+    """Т7 (robustness): підкладає ЯВНИЙ список геномів для наступного
+    /experiment/start — сервер віддасть саме їх замість випадкової
+    популяції. Постав Unity Population Size = len(genomes),
+    Max Generations = 1, потім Play. Одноразово — після використання
+    очищається."""
+    global PENDING_FIXED_GENOMES
+    PENDING_FIXED_GENOMES = [g.model_dump() for g in genomes]
+    return {"staged": len(PENDING_FIXED_GENOMES),
+            "note": "Постав Unity Population Size="
+                    f"{len(PENDING_FIXED_GENOMES)}, Max Generations=1, тоді Play."}
 
 
 @app.post("/experiment/start", response_model=Generation)
@@ -115,7 +135,25 @@ def start_experiment(cfg: ExperimentConfig):
     STATE["tolerance"] = TOL_START
     STATE["champion"] = None
     STATE["git_commit"] = cfg_payload["git_commit"]
-    return Generation(generation_id=0, genomes=engine.init_population(),
+
+    global PENDING_FIXED_GENOMES
+    if PENDING_FIXED_GENOMES is not None:
+        if len(PENDING_FIXED_GENOMES) != cfg.population_size:
+            raise HTTPException(400, f"Підкладено {len(PENDING_FIXED_GENOMES)} геномів, "
+                                     f"а Population Size={cfg.population_size} — мають "
+                                     f"збігатись. Постав Population Size="
+                                     f"{len(PENDING_FIXED_GENOMES)}.")
+        engine.generation_id = 0
+        engine.population = [
+            Genome(individual_id=i, construction=g["construction"], motion=g["motion"])
+            for i, g in enumerate(PENDING_FIXED_GENOMES)
+        ]
+        PENDING_FIXED_GENOMES = None  # одноразово
+        genomes = engine.population
+    else:
+        genomes = engine.init_population()
+
+    return Generation(generation_id=0, genomes=genomes,
                       success_tolerance=STATE["tolerance"])
 
 
