@@ -27,3 +27,9 @@ Comparison of self-paced (Schmitt-trigger) vs. open-loop curriculum strategies a
 
 (Рис.8,run_20260810_131108 run_20260810_135744 run_20260810_144209 run_20260810_164525 run_20260810_172937, fig-nsga2-vs-baseline-nsga2);
 "Fig. 8. Pareto front projection (M vs. W_cv) aggregated from the final 10 generations of 5 NSGA-II runs (colored by seed; gray = dominated feasible individuals). The trade-off is primarily inter-seed: within a single run, construction genes converge early (epistatic lock-in), so front diversity along M emerges mainly across independent runs rather than within one."
+
+Перший робастний результат Т7 для сіда 43
+Шум, °	n	Success, %	Похибка (mean±std, мм)
+0.0 (контроль)	30	100.0	53.53 ± 0.004
+0.1 (промисловий клас)	30	43.3	60.64 ± 11.15
+0.5 (бюджетний клас)	30	20.0	65.10 ± 10.01

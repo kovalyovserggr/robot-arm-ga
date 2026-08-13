@@ -215,6 +215,14 @@ def submit_results(res: GenerationResults):
     log_payload["tolerance"] = active_tol  # FIX: діючий на це покоління, не наступний
     log_payload["success_rate"] = success_rate
     log_payload["optimizer"] = cfg.optimizer
+    # FIX: engine.history (best/mean/sigma) раніше жило ЛИШЕ в пам'яті
+    # процесу — недоступне для аналізу вже ЗАВЕРШЕНИХ прогонів (той
+    # самий клас проблеми, що й live-only champion). sigma критична
+    # для Рис.6 (Т4, порівняння стратегій мутації) — без цього поля
+    # неможливо побудувати криву σ по поколіннях з архівних логів.
+    if engine.history:
+        log_payload["sigma"] = engine.history[-1].get("sigma")
+        log_payload["mutation_strategy"] = getattr(engine, "mutation_strategy", None)
     last_eval = getattr(engine, "last_eval", None)
     if last_eval:
         for r in log_payload["results"]:

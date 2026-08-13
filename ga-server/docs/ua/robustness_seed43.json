@@ -1,0 +1,23 @@
+[
+  {
+    "noise_deg": 0.0,
+    "n": 30,
+    "success_rate_pct": 100.0,
+    "precision_mean_mm": 53.529423906666665,
+    "precision_std_mm": 0.0035469655228975196
+  },
+  {
+    "noise_deg": 0.1,
+    "n": 30,
+    "success_rate_pct": 43.333333333333336,
+    "precision_mean_mm": 60.641120083333334,
+    "precision_std_mm": 11.14602887072583
+  },
+  {
+    "noise_deg": 0.5,
+    "n": 30,
+    "success_rate_pct": 20.0,
+    "precision_mean_mm": 65.09524547,
+    "precision_std_mm": 10.010982260996094
+  }
+]
