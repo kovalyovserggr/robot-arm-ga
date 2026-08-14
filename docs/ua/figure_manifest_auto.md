@@ -23,3 +23,15 @@
 | fig-nsga2-vs-baseline-weightedsum | run_20260812_225902 | 554329c | 43 | C:\simulation\images\convergence_run_20260812_225902_gen0000.png |
 | fig-nsga2-vs-baseline-weightedsum | run_20260812_230555 | 554329c | 43 | C:\simulation\images\convergence_run_20260812_230555_gen0000.png |
 | fig-nsga2-vs-baseline-weightedsum | run_20260812_231749 | 554329c | 43 | C:\simulation\images\convergence_run_20260812_231749_gen0000.png |
+| fig6-mutation-constant | run_20260813_105512 | 4f8d137 | 30 | C:\simulation\images\convergence_run_20260813_105512_gen0199.png |
+| fig6-mutation-constant | run_20260813_113727 | 4f8d137 | 31 | C:\simulation\images\convergence_run_20260813_113727_gen0199.png |
+| fig6-mutation-constant | run_20260813_122323 | 4f8d137 | 32 | C:\simulation\images\convergence_run_20260813_122323_gen0199.png |
+| fig6-mutation-annealing | run_20260813_131819 | 4f8d137 | 30 | C:\simulation\images\convergence_run_20260813_131819_gen0199.png |
+| fig6-mutation-annealing | run_20260813_142001 | 4f8d137 | 31 | C:\simulation\images\convergence_run_20260813_142001_gen0199.png |
+| fig6-mutation-annealing | run_20260813_150440 | 4f8d137 | 32 | C:\simulation\images\convergence_run_20260813_150440_gen0199.png |
+| fig6-mutation-pcontrol | run_20260813_154956 | 4f8d137 | 30 | C:\simulation\images\convergence_run_20260813_154956_gen0199.png |
+| fig6-mutation-pcontrol | run_20260813_163445 | 4f8d137 | 31 | C:\simulation\images\convergence_run_20260813_163445_gen0199.png |
+| fig6-mutation-pcontrol | run_20260813_171846 | 4f8d137 | 32 | C:\simulation\images\convergence_run_20260813_171846_gen0199.png |
+| fig6-mutation-selfadaptive | run_20260813_180113 | 4f8d137 | 30 | C:\simulation\images\convergence_run_20260813_180113_gen0199.png |
+| fig6-mutation-selfadaptive | run_20260813_205007 | 4f8d137 | 31 | C:\simulation\images\convergence_run_20260813_205007_gen0199.png |
+| fig6-mutation-selfadaptive | run_20260813_214339 | 4f8d137 | 32 | C:\simulation\images\convergence_run_20260813_214339_gen0199.png |
