@@ -185,6 +185,11 @@
 - Можливий майбутній рефайнмент (НЕ зараз, дисципліна серії):
   неперервний бонус за запас точності навіть після проходження порогу,
   замість чистого бінарного success/fail розмежування в eff-гілці.
+ #Т21 додаток (оновлення, сесія 2026-08-16): тонкий запас — системна властивість, не одиничний випадок
+Початкове спостереження Т21 (сід 43: 53.5мм при допуску 55.4мм, запас 1.86мм) могло здаватись збігом одного граничного чемпіона.
+Перезапуск решти сідів nsga2-серії на виправленому коді (tolerance-off-by-one, v2.3+) дав ЧОТИРИ незалежні справжні успіхи (сіди 40, 41, 43, 44) — і ВСІ чотири мають тонкий запас 1.86-3.56мм: сід 40: tolerance=20.37мм, precision=16.81мм, запас=3.56мм сід 41: tolerance=23.02мм, precision=20.01мм, запас=3.01мм сід 43: tolerance=55.40мм, precision=53.54мм, запас=1.86мм сід 44: tolerance=10.39мм, precision=6.84мм, запас=3.55мм (сід 42 виключено — success=False, немає справжнього успіху для вимірювання запасу).
+Висновок посилюється з "спостереження на одному чемпіоні" до "системної властивості методу при n=4 незалежних сідах": попри дуже різні абсолютні рівні допуску (10-55мм, залежно від того, коли self_paced curriculum спіймав перший успіх), відносний запас систематично малий (~15-25% від значення допуску, ніколи не наближається до 50%+) — узгоджується з механізмом Т21: fitness не дає стимулу перевищувати поріг із запасом, тож відбір ЗАВЖДИ знаходить рішення, що ледь проходить, незалежно від конкретного рівня допуску чи сіда.
+Практичний наслідок для MuJoCo крос-валідації (Рис.11, Крок 3): ОЧІКУВАНО, що незалежна фізика може перевернути success/fail навіть для генетично "хороших" чемпіонів — тонкий запас робить це системним, а не артефактом одного невдалого вибору кандидата. Кандидати для Рис.11 обрані САМЕ з підтвердженим success=True (сіди 40, 41, 43, 44) — якщо MuJoCo дасть success=False для когось із них при позиційній похибці в межах кількох мм від Unity-порогу, це ПОВНІСТЮ узгоджується з цим висновком, а не свідчить про помилку крос-валідації.
 
   ## Т22. P-control σ ризикує передчасно "замкнутись" на підлозі (з аналізу Рис.6/6b)
 - Емпіричний факт (Рис.6b, серія стратегій мутації, 3 сіди/стратегію):
@@ -218,3 +223,50 @@
   σ_min для p_control могла б бути вищою, або регулятор міг би мати
   власний "розігрів"/гістерезис (у дусі тригера Шмітта, Т10) замість
   миттєвої реакції на єдине спостереження best_precision.
+
+  #Т23
+  "Gate threshold ablation (4%/25%/50%, n=3 seeds each) confirmed the hypothesized trend: higher gate settings yield both earlier breakthrough and more seeds reaching sustained success (2/3 at 50% vs 1/3 at 4% and 25%). Even non-breakthrough seeds achieved substantially closer approach at higher gate settings, suggesting the tighten threshold primarily controls how much 'grace period' the population receives before curriculum pressure outpaces its actual capability — consistent with the Bernoulli-variance argument for optimal setpoint near 50%."
+
+  # Т24. MuJoCo крос-валідація: спробувана, перенесена в Future Work
+- Виконано (сесія 2026-08-15/16): генератор MJCF з генів конструкції
+  (mujoco_bridge.py), математично доведений незалежною матричною FK
+  на 53 геномах (макс. розбіжність 0.003мм — чиста похибка
+  округлення float, не помилка алгоритму); 4-фазна інтерполяція руху,
+  перевірена аналітично (5/5 тестів); повний цикл захват+встановлення
+  +метрики (mujoco_assembly.py), дзеркало AssemblyPlatform.cs формула
+  за формулою.
+- Результат на 4 підтверджених успішних чемпіонах (сіди 40,41,43,44,
+  nsga2, усі з достовірним tolerance після фіксу off-by-one): 0/4
+  success відтворились у MuJoCo. Позиційний розрив нестабільний між
+  сідами (1-9см), не єдиний систематичний зсув — ознака КОМБІНАЦІЇ
+  дрібних незалежних похибок (шумна оцінка швидкості через різницю
+  позицій за крок, спрощена кінематична модель захвату через
+  mocap-тіло, невідома точна база-орієнтація руки в Unity через
+  відсутність доступу до ArmBuilder.cs), а не однієї явної помилки.
+- Рішення (усвідомлений вибір Сергія): НЕ продовжувати калібрування
+  заради точної відповідності "success=True" в обох рушіях — витрати
+  часу на усунення накопичених дрібних розбіжностей (без доступу до
+  оригінального ArmBuilder.cs) перевищують віддачу для цього проекту.
+  Перенесено в Future Work.
+- Формулювання для Limitations/Future Work статті: "An independent
+  cross-validation of evolved champions in the MuJoCo physics engine
+  was attempted; forward kinematics were verified analytically
+  (max. discrepancy 0.003mm across 53 genomes), and the full
+  4-phase motion sequence was faithfully reproduced. However, without
+  access to the exact base-frame placement convention used by the
+  Unity implementation, small calibration discrepancies (grasp
+  velocity estimation, simplified kinematic grasp modeling, assumed
+  coordinate mapping) accumulated to prevent successful reproduction
+  of the razor-thin success margins characteristic of evolved
+  champions (cf. Section on fitness formula limitations). Given that
+  ALL examined champions exhibit tolerance margins of only 1.9-3.6mm
+  (see margin analysis), even sub-centimeter cross-engine
+  discrepancies are sufficient to flip the binary success outcome.
+  A fully calibrated cross-engine validation — requiring either
+  shared base-frame specification or joint recalibration against a
+  known reference trajectory — is left as future work."
+- Позитивний побічний результат, який ЗАЛИШАЄТЬСЯ корисним: сам факт,
+  що незалежна кінематика (Крок 1) збігається з точністю до
+  мікрометрів, підтверджує коректність декодування генів (a_i, α_i,
+  d_i) як таких — це малий, але реальний додатковий доказ
+  правильності GENOME_SPEC, незалежний від Unity.

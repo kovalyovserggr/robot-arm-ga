@@ -35,3 +35,16 @@
 | fig6-mutation-selfadaptive | run_20260813_180113 | 4f8d137 | 30 | C:\simulation\images\convergence_run_20260813_180113_gen0199.png |
 | fig6-mutation-selfadaptive | run_20260813_205007 | 4f8d137 | 31 | C:\simulation\images\convergence_run_20260813_205007_gen0199.png |
 | fig6-mutation-selfadaptive | run_20260813_214339 | 4f8d137 | 32 | C:\simulation\images\convergence_run_20260813_214339_gen0199.png |
+| fig7-gate-04 | run_20260814_200424 | 7293d97 | 30 | C:\simulation\images\convergence_run_20260814_200424_gen0199.png |
+| fig7-gate-04 | run_20260814_212308 | 7293d97 | 31 | C:\simulation\images\convergence_run_20260814_212308_gen0199.png |
+| fig7-gate-04 | run_20260814_220529 | 7293d97 | 32 | C:\simulation\images\convergence_run_20260814_220529_gen0199.png |
+| fig7-gate-25 | run_20260814_230518 | 7293d97 | 30 | C:\simulation\images\convergence_run_20260814_230518_gen0199.png |
+| fig7-gate-25 | run_20260815_100922 | 7293d97 | 31 | C:\simulation\images\convergence_run_20260815_100922_gen0199.png |
+| fig7-gate-25 | run_20260815_105304 | 7293d97 | 32 | C:\simulation\images\convergence_run_20260815_105304_gen0199.png |
+| fig7-gate-50 | run_20260815_113735 | 7293d97 | 30 | C:\simulation\images\convergence_run_20260815_113735_gen0199.png |
+| fig7-gate-50 | run_20260815_123221 | 7293d97 | 31 | C:\simulation\images\convergence_run_20260815_123221_gen0199.png |
+| fig7-gate-50 | run_20260815_134127 | 7293d97 | 32 | C:\simulation\images\convergence_run_20260815_134127_gen0199.png |
+| fig-nsga2-vs-baseline-nsga2  | run_20260816_114602 | 5c77700 | 40 | C:\simulation\images\convergence_run_20260816_114602_gen0199.png |
+| fig-nsga2-vs-baseline-nsga2  | run_20260816_122706 | 5c77700 | 41 | C:\simulation\images\convergence_run_20260816_122706_gen0199.png |
+| fig-nsga2-vs-baseline-nsga2  | run_20260816_131939 | 5c77700 | 42 | C:\simulation\images\convergence_run_20260816_131939_gen0199.png |
+| fig-nsga2-vs-baseline-nsga2  | run_20260816_143445 | 5c77700 | 44 | C:\simulation\images\convergence_run_20260816_143445_gen0199.png |

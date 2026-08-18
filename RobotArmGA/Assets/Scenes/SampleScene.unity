@@ -534,11 +534,11 @@ MonoBehaviour:
     ConstructionGeneCount: 18
     MotionGeneCount: 24
     MaxGenerations: 200
-    Seed: 32
-    SeriesLabel: fig6-mutation-selfadaptive
+    Seed: 44
+    SeriesLabel: 'fig-nsga2-vs-baseline-nsga2 '
     CurriculumStrategy: self_paced
-    Optimizer: weighted_sum
-    MutationStrategy: self_adaptive
+    Optimizer: nsga2
+    MutationStrategy: self_paced
     CurriculumGateTighten: 0.25
     CurriculumGateLoosen: 0.02
 --- !u!4 &1756067589

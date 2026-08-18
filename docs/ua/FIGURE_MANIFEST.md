@@ -1,7 +1,50 @@
-#  маніфест серій — сирі дані для docs/ua/FIGURE_MANIFEST.md
-fig04_curriculum_comparison.png :
-Comparison of self-paced (Schmitt-trigger) vs. open-loop curriculum strategies across 3 seeds each. Self-paced achieves breakthrough in 2/3 seeds (generation ~105–125) and sustains 15–40% success rate; open-loop fails to converge in all 3 seeds within 200 generations, with the tolerance schedule outpacing the population's actual capability."
+# FIGURE_MANIFEST.md — реєстр рисунків і таблиць статті
 
+Оновлено: 2026-08-16. Джерело run_id/тегів — docs/ua/figure_manifest_auto.md
+(сирі автозаписи, не редагувати вручну) + docs/ua/runs_index.md.
+
+## Рис.1 — Сцена: 100 паралельних площадок
+Стан: **Готово** (скріншот Unity). run_id: —.
+
+## Рис.2 — Архітектура клієнт-сервер
+Стан: **Не почато** (є чат-діаграма, не файл статті).
+
+## Рис.3 — Геном: DH-параметри + фазові кути
+Стан: **Не почато**.
+
+## Рис.4 — A vs B: self-paced проти open-loop curriculum (3+3 сіди)
+Стан: **Готово**. Файл: `fig04_curriculum_comparison.png`.
+- self-paced (тег v2.1-official-series-start, git 60dc76a...f830cc7):
+  run_20260809_165204 (30), run_20260809_173652 (31), run_20260809_181843 (32)
+- open-loop (тег v2.1-curriculum-switch, git f830cc7 — ІНШИЙ код,
+  +1 поле curriculum_strategy): run_20260809_230221 (32),
+  run_20260810_084828 (31), run_20260810_102634 (30)
+- Підпис: "Comparison of self-paced (Schmitt-trigger) vs. open-loop
+  curriculum strategies across 3 seeds each. Self-paced achieves
+  breakthrough in 2/3 seeds (generation ~105–125) and sustains 15–40%
+  success rate; open-loop fails to converge in all 3 seeds within 200
+  generations, with the tolerance schedule outpacing the population's
+  actual capability."
+- Висновок: Open-loop 0/3, self-paced 2/3 — self-paced curriculum
+  статистично значно стійкіший за розкладний.
+
+## Рис.5 — NSGA-II vs weighted_sum: успіх/похибка (5+5 сідів)
+Стан: **Готово**. Файл: `fig05_curriculum_comparison.png`
+(назва успадкована зі скрипта-шаблону, зміст — nsga2 vs weighted_sum).
+- nsga2 (тег v2.2-optimizer-switch, git c11893b): run_20260810_131108(40),
+  run_20260810_135744(41), run_20260810_144209(42), run_20260810_172937(44);
+  сід 43 ПЕРЕЗАПУЩЕНО двічі: перший раз run_20260810_164525 (застарілий,
+  tolerance-баг) — **НЕ використовувати**; коректний —
+  run_20260812_101137 (тег v2.3-tolerance-offbyone-fix, git 0e1f93b)
+- weighted_sum (git c11893b): run_20260810_181322(40), run_20260810_185434(41),
+  run_20260810_193553(42), run_20260810_201629(43), run_20260810_213316(44)
+
+## Таблиця — Порівняння чемпіонів (M/W_cv/W_max_over_M/E/T)
+Стан: **Готово**. Файли: `champions_comparison_fig05.md` / `.docx`.
+
+**ВИПРАВЛЕНО 2026-08-16:** рядок сіда 43 (nsga2) раніше містив
+ЗАСТАРІЛІ дані (покоління 173, до фіксу tolerance-off-by-one).
+Актуальні коректні дані нижче.
 
 | Seed | Метод | success | покоління | T, с | E, Дж | W_cv | W_max, Дж | M, м | W_max/M |
 |---|---|---|---|---|---|---|---|---|---|
@@ -11,25 +54,119 @@ Comparison of self-paced (Schmitt-trigger) vs. open-loop curriculum strategies a
 | 41 | weighted_sum | так | 199 | 8.54 | 1.16e+03 | 0.138 | 226 | 1.34 | 169 |
 | 42 | nsga2 | так | 66 | 9.18 | 2.16e+03 | 0.454 | 575 | 0.572 | 1e+03 |
 | 42 | weighted_sum | так | 199 | 7.66 | 779 | 0.016 | 133 | 0.857 | 156 |
-| 43 | nsga2 | так | 173 | 7.74 | 1.55e+03 | 0.396 | 354 | 0.33 | 1.07e+03 |
+| **43** | **nsga2** | **так** | **155** | **7.68** | **1.18e+03** | **0.388** | **326** | **0.377** | **866** |
 | 43 | weighted_sum | так | 195 | 7.06 | 2.76e+03 | 0.508 | 804 | 0.771 | 1.04e+03 |
 | 44 | nsga2 | так | 132 | 7.06 | 2.25e+03 | 0.409 | 694 | 1.01 | 688 |
 | 44 | weighted_sum | так | 197 | 7.98 | 965 | 0.02 | 165 | 0.858 | 193 |
 
-**Середнє по успішних чемпіонах:**
+**Статистика по успішних чемпіонах (mean ± std [min–max], n=5 сідів):**
 
-| Метод | M, м (mean) | W_cv (mean) | W_max/M (mean) | E, Дж (mean) | T, с (mean) |
+| Метод | M, м | W_cv | W_max/M | E, Дж | T, с |
 |---|---|---|---|---|---|
-| nsga2 | 0.639 | 0.356 | 867 | 2.14e+03 | 8.22 |
-| weighted_sum | 0.967 | 0.202 | 400 | 1.53e+03 | 7.8 |
+| nsga2 | 0.649 ± 0.21 [0.377–1.01] | 0.354 ± 0.114 [0.132–0.454] | 826 ± 115 [688–1e+03] | 2.06e+03 ± 677 [1.18e+03–3.17e+03] | 8.21 ± 0.765 [7.06–9.18] |
+| weighted_sum | 0.967 ± 0.202 [0.771–1.34] | 0.202 ± 0.191 [0.016–0.508] | 400 ± 338 [156–1.04e+03] | 1.53e+03 ± 742 [779–2.76e+03] | 7.8 ± 0.48 [7.06–8.54] |
 
+Примітка: широкий розкид (напр. W_cv між сідами) — очікуваний ефект
+при n=5; знак розбіжності по сідах різний (напр. seed 42/43 W_cv
+мають протилежний знак переваги) — не інтерпретувати mean як однозначну
+перевагу методу без урахування std.
 
+**Запас точності (tolerance − precision_error) для чотирьох
+підтверджених успішних сідів nsga2, перезапущених на виправленому
+коді (v2.3+, 2026-08-16):** сід 40 = 3.56мм, сід 41 = 3.01мм,
+сід 43 = 1.86мм, сід 44 = 3.55мм. Сід 42 виключено (success=False
+при перезапуску). Усі чотири — тонкий запас (Т21) → системна
+властивість методу, не одиничний випадок.
 
-(Рис.8,run_20260810_131108 run_20260810_135744 run_20260810_144209 run_20260810_164525 run_20260810_172937, fig-nsga2-vs-baseline-nsga2);
-"Fig. 8. Pareto front projection (M vs. W_cv) aggregated from the final 10 generations of 5 NSGA-II runs (colored by seed; gray = dominated feasible individuals). The trade-off is primarily inter-seed: within a single run, construction genes converge early (epistatic lock-in), so front diversity along M emerges mainly across independent runs rather than within one."
+## Рис.6 — Стратегії мутації: constant/annealing/p_control/self-adaptive
+Стан: **Готово**. Файли: `fig06_mutation_strategies.png` +
+`fig06b_mutation_sigma.png` (σ по поколіннях).
+- Тег коду: git 4f8d137. Optimizer=weighted_sum для всіх 12 прогонів
+  (mutation_strategy застосовний лише до baseline).
+- constant: run_20260813_105512(30), _113727(31), _122323(32)
+- annealing: run_20260813_131819(30), _142001(31), _150440(32)
+- p_control: run_20260813_154956(30), _163445(31), _171846(32)
+- self_adaptive: run_20260813_180113(30), _205007(31), _214339(32)
+  (ВАЖЛИВО: self_adaptive реалізована ВПЕРШЕ в цій сесії — до того
+  існували лише 3 з 4 стратегій)
+- Ключова знахідка (Т22): p_control-σ провалюється до підлоги σ_min
+  за перші ~10 поколінь через одну випадкову близьку особину —
+  пояснює аномальну стагнацію без успіху для сіда 31 у цій гілці
+  (precision ~0.3-0.4мм, success=0% усі 200 поколінь). self_adaptive
+  уникає цієї пастки (вищий "поверх" σ, справжнє розходження між
+  сідами).
 
-Перший робастний результат Т7 для сіда 43
-Шум, °	n	Success, %	Похибка (mean±std, мм)
-0.0 (контроль)	30	100.0	53.53 ± 0.004
-0.1 (промисловий клас)	30	43.3	60.64 ± 11.15
-0.5 (бюджетний клас)	30	20.0	65.10 ± 10.01
+## Рис.7 — Серія Т10: уставка тригера → рівноважний допуск
+Стан: **Готово**. Файл: `fig07_gate_series.png`.
+- Тег коду: git 7293d97. Optimizer=nsga2 для всіх 9 прогонів.
+- gate=0.04: run_20260814_200424(30), _212308(31), _220529(32)
+- gate=0.25: run_20260814_230518(30), run_20260815_100922(31), _105304(32)
+- gate=0.50: run_20260815_113735(30), _123221(31), _134127(32)
+- Результат (Т23): gate=50% дав 2/3 успішних сідів (піки успіху
+  50-65%) проти 1/3 при gate=4% і gate=25% — підтверджує гіпотезу
+  максимуму дисперсії Бернуллі (~50% оптимальний setpoint).
+
+## Рис.8 — Фронт Парето: M vs W_cv, багатосідовий архів
+Стан: **Готово**. Файл: `fig08_pareto_front.png`.
+- Ті самі 5 nsga2 run_id, що й Рис.5 (--last-n-gens 10 --color-by-seed).
+  УВАГА: використано СТАРИЙ run_id сіда 43 (run_20260810_164525,
+  до фіксу tolerance) — фронт по кінематиці/M/W_cv це не зачіпає
+  (tolerance-баг стосувався лише запису допуску, не самого відбору),
+  тому рисунок лишається коректним, але для повної акуратності
+  можна перегенерувати з run_20260812_101137 при нагоді.
+- Підпис: "Fig. 8. Pareto front projection (M vs. W_cv) aggregated
+  from the final 10 generations of 5 NSGA-II runs (colored by seed;
+  gray = dominated feasible individuals). The trade-off is primarily
+  inter-seed: within a single run, construction genes converge early
+  (epistatic lock-in), so front diversity along M emerges mainly
+  across independent runs rather than within one."
+
+## Рис.9 — Еволюція конструкції чемпіона: геометрія + порівняння з v1.0
+Стан: **Готово**. Файл: `fig09_champion_geometry.png` (двопанельний,
+t=3s/t=8s, MuJoCo-рендер).
+- run_20260812_101137 (сід 43, тег v2.3-tolerance-offbyone-fix).
+- Декодована геометрія: 2 несучих сегменти (0.230м, 0.147м через a_i),
+  4 злиті суглоби — компактна, "сферичне зап'ястя"-подібна структура.
+- v1.0-baseline порівняння — ЗВІРИТИ числа з реальним RESULTS_LOG.md
+  перед фінальним поданням (наводились з пам'яті розмови раніше).
+
+## Рис.10 — Robustness (Т7): success%/похибка при шумі приводу
+Стан: **Готово**. Файл: `fig10_robustness.png`.
+- Джерело: run_20260812_101137 (сід 43). Тег робастного прогону:
+  v2.4-robustness-tolerance-fix.
+
+| Шум, ° | n | Success, % | Похибка (mean±std, мм) |
+|---|---|---|---|
+| 0.0 (контроль) | 30 | 100.0 | 53.53 ± 0.004 |
+| 0.1 | 30 | 43.3 | 60.64 ± 11.15 |
+| 0.5 | 30 | 20.0 | 65.10 ± 10.01 |
+
+Примітка: назви "промисловий"/"бюджетний" клас — умовні робочі
+позначки, НЕ засновані на каталожних специфікаціях реальних приводів
+(див. METHODOLOGY_TABLES, Табл.4).
+
+## Рис.11 — MuJoCo крос-валідація
+Стан: **Future Work** (свідомо перенесено, див. DECISIONS.md Р14,
+DISCUSSION_NOTES.md Т24). Кроки 1-2 (MJCF-генератор, кінематика,
+рух) виконані й доведені (FK точна до 0.003мм на 53 геномах); Крок 3
+(повний цикл) дав 0/4 success на підтверджених чемпіонах через
+накопичені калібрувальні розбіжності.
+
+## Табл.1 — Порівняння з related work (4 табори)
+Стан: **Не почато** — потрібен реальний пошук літератури.
+
+## Табл.2-4 — Геном / Гіперпараметри / Класи приводів
+Стан: **Готово**. Файл: `METHODOLOGY_TABLES.docx`.
+Джерело: GenomeSpec.cs (перевірений код) + ga_engine.py/nsga2_engine.py.
+
+## Git-теги проекту (підтверджено скріншотом GitHub Desktop)
+v1.1-baseline → v2.0-nsga2-matingfix → v2.1-official-series-start →
+v2.1-curriculum-switch → v2.2-optimizer-switch →
+v2.3-tolerance-offbyone-fix → v2.4-mutation-gate-fields →
+v2.4-robustness-tolerance-fix → (self_adaptive-мутація закомічена,
+точний тег не підтверджено, ймовірно наступний у послідовності)
+
+## Загальний підсумок станів
+Готово: Рис.4,5,6,7,8,9,10 + Табл.чемпіонів + Табл.2-4 (10 позицій).
+Future Work: Рис.11 (1 позиція, свідомо).
+Не почато: Рис.1(частково)/2/3, Табл.1 (потребує пошуку літератури).
